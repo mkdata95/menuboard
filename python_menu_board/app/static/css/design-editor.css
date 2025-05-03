@@ -154,6 +154,11 @@ body {
 
 .property-section {
     margin-bottom: 20px;
+    display: block;
+}
+
+.property-section.d-none {
+    display: none;
 }
 
 .section-title {
@@ -169,48 +174,69 @@ body {
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    font-size: 13px;
-    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #333;
 }
 
-.form-control {
+.form-control, .form-select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
 }
 
-.color-picker {
+.form-control:focus, .form-select:focus {
+    border-color: #1a73e8;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.form-check {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 5px;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-.color-option {
-    width: 30px;
-    height: 30px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
+.form-check-input {
+    margin-right: 8px;
     cursor: pointer;
 }
 
-.color-option.active {
-    border: 2px solid #1a73e8;
+.form-check-label {
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* 컬러 피커 스타일 */
+input[type="color"] {
+    width: 100%;
+    height: 36px;
+    padding: 2px;
+    cursor: pointer;
+}
+
+/* 레인지 슬라이더 스타일 */
+input[type="range"] {
+    width: 100%;
+    margin-top: 8px;
 }
 
 /* 텍스트 스타일 버튼 */
 .text-style-buttons {
     display: flex;
     gap: 5px;
-    margin-top: 5px;
+    margin-top: 8px;
+    margin-bottom: 15px;
 }
 
 .text-style-btn {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -218,10 +244,13 @@ body {
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    transition: all 0.2s;
+    color: #555;
 }
 
 .text-style-btn:hover {
     background-color: #f0f0f0;
+    color: #000;
 }
 
 .text-style-btn.active {

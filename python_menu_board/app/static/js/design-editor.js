@@ -8,16 +8,16 @@ let activeToolType = null; // 현재 활성화된 도구 타입
 // 캔버스 초기화
 document.addEventListener('DOMContentLoaded', function() {
     try {
-        initCanvasWithDefaults();
+        // 페이지 로드 시 단 한 번만 캔버스 초기화
+        if (!canvas) {
+            initCanvasWithDefaults();
+        }
         
         // 이벤트 리스너 등록
         setupEventListeners();
         
-        // 기본적으로 일반 속성 패널 표시
-        const generalProperties = document.getElementById('general-properties');
-        if (generalProperties) {
-            showPropertySection('general-properties');
-        }
+        // 기본적으로 모든 속성 패널 숨김 처리
+        hideAllPropertySections();
     } catch (error) {
         console.error('캔버스 초기화 오류:', error);
     }
@@ -311,7 +311,34 @@ function setupEventListeners() {
     const saveDesignBtn = document.getElementById('save-design');
     if (saveDesignBtn) {
         saveDesignBtn.addEventListener('click', function() {
+            // 모달 표시
+            try {
+                const designNameInput = document.getElementById('design-name-input');
+                if (designNameInput) {
+                    designNameInput.value = designNameInput.value || '새 디자인';
+                }
+                const saveModal = new bootstrap.Modal(document.getElementById('save-design-modal'));
+                saveModal.show();
+            } catch (error) {
+                console.error('모달 표시 오류:', error);
+                // 모달 오류 시 직접 저장
+                saveDesign();
+            }
+        });
+    }
+    
+    // 모달에서 저장 확인 버튼
+    const confirmSaveBtn = document.getElementById('confirm-save-design');
+    if (confirmSaveBtn) {
+        confirmSaveBtn.addEventListener('click', function() {
             saveDesign();
+            // 모달 닫기
+            try {
+                const saveModal = bootstrap.Modal.getInstance(document.getElementById('save-design-modal'));
+                if (saveModal) saveModal.hide();
+            } catch (error) {
+                console.error('모달 닫기 오류:', error);
+            }
         });
     }
     
@@ -340,26 +367,22 @@ function setupEventListeners() {
     }
     
     // 텍스트 속성 변경 이벤트
-    const textContentInput = document.getElementById('text-content');
-    if (textContentInput) {
-        textContentInput.addEventListener('input', function() {
-            const activeObject = canvas.getActiveObject();
-            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
-                activeObject.set('text', this.value);
-                canvas.renderAll();
-                saveCanvasState();
-            }
-        });
-    }
+    setupTextPropertyListeners();
     
     // 캔버스 객체 선택 이벤트
     if (canvas) {
         canvas.on('selection:created', function(options) {
-            updatePropertiesPanel(options.target);
+            const selectedObject = options.selected ? options.selected[0] : options.target;
+            console.log('선택된 객체:', selectedObject);
+            activeToolType = null; // 선택 시 활성 도구 초기화
+            updatePropertiesPanel(selectedObject);
         });
         
         canvas.on('selection:updated', function(options) {
-            updatePropertiesPanel(options.target);
+            const selectedObject = options.selected ? options.selected[0] : options.target;
+            console.log('업데이트된 선택 객체:', selectedObject);
+            activeToolType = null; // 선택 시 활성 도구 초기화
+            updatePropertiesPanel(selectedObject);
         });
         
         canvas.on('selection:cleared', function() {
@@ -380,6 +403,240 @@ function setupEventListeners() {
     }
 }
 
+// 텍스트 속성 리스너 설정
+function setupTextPropertyListeners() {
+    // 텍스트 내용 변경
+    const textContent = document.getElementById('text-content');
+    if (textContent) {
+        textContent.addEventListener('input', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('text', this.value);
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 글꼴 변경
+    const fontFamily = document.getElementById('text-font-family');
+    if (fontFamily) {
+        fontFamily.addEventListener('change', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('fontFamily', this.value);
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 글자 크기 변경
+    const fontSize = document.getElementById('text-font-size');
+    if (fontSize) {
+        fontSize.addEventListener('change', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('fontSize', parseInt(this.value));
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 글자 색상 변경
+    const textColor = document.getElementById('text-color');
+    if (textColor) {
+        textColor.addEventListener('input', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('fill', this.value);
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 굵게 설정
+    const textBold = document.getElementById('text-bold');
+    if (textBold) {
+        textBold.addEventListener('change', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('fontWeight', this.checked ? 'bold' : 'normal');
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 기울임 설정
+    const textItalic = document.getElementById('text-italic');
+    if (textItalic) {
+        textItalic.addEventListener('change', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('fontStyle', this.checked ? 'italic' : 'normal');
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 텍스트 정렬 설정
+    const textAlign = document.getElementById('text-align');
+    if (textAlign) {
+        textAlign.addEventListener('change', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('textAlign', this.value);
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 투명도 설정
+    const textOpacity = document.getElementById('text-opacity');
+    if (textOpacity) {
+        textOpacity.addEventListener('input', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('opacity', parseFloat(this.value));
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 회전 각도 설정
+    const textAngle = document.getElementById('text-angle');
+    const textAngleValue = document.getElementById('text-angle-value');
+    if (textAngle) {
+        textAngle.addEventListener('input', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+                activeObject.set('angle', parseInt(this.value));
+                if(textAngleValue) textAngleValue.textContent = this.value + '°';
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        });
+    }
+    
+    // 텍스트 정렬 버튼 (있는 경우)
+    setupTextAlignButtons();
+}
+
+// 텍스트 정렬 버튼 설정
+function setupTextAlignButtons() {
+    const textAlignLeft = document.getElementById('text-align-left');
+    const textAlignCenter = document.getElementById('text-align-center');
+    const textAlignRight = document.getElementById('text-align-right');
+    
+    if (textAlignLeft) {
+        textAlignLeft.addEventListener('click', function() {
+            setTextAlignment('left');
+        });
+    }
+    
+    if (textAlignCenter) {
+        textAlignCenter.addEventListener('click', function() {
+            setTextAlignment('center');
+        });
+    }
+    
+    if (textAlignRight) {
+        textAlignRight.addEventListener('click', function() {
+            setTextAlignment('right');
+        });
+    }
+}
+
+// 텍스트 정렬 설정 함수
+function setTextAlignment(alignment) {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+        activeObject.set('textAlign', alignment);
+        
+        // 정렬 버튼 활성화 상태 업데이트
+        updateTextAlignButtons(alignment);
+        
+        canvas.renderAll();
+        saveCanvasState();
+    }
+}
+
+// 텍스트 정렬 버튼 활성화 상태 업데이트
+function updateTextAlignButtons(alignment) {
+    const textAlignLeft = document.getElementById('text-align-left');
+    const textAlignCenter = document.getElementById('text-align-center');
+    const textAlignRight = document.getElementById('text-align-right');
+    
+    if (textAlignLeft) textAlignLeft.classList.toggle('active', alignment === 'left');
+    if (textAlignCenter) textAlignCenter.classList.toggle('active', alignment === 'center');
+    if (textAlignRight) textAlignRight.classList.toggle('active', alignment === 'right');
+}
+
+// 텍스트 속성 업데이트 함수 개선
+function updateTextProperties(textObject) {
+    if (!textObject) return;
+    
+    const textContent = document.getElementById('text-content');
+    const fontFamily = document.getElementById('text-font-family');
+    const fontSize = document.getElementById('text-font-size');
+    const textColor = document.getElementById('text-color');
+    const textBold = document.getElementById('text-bold');
+    const textItalic = document.getElementById('text-italic');
+    const textAlign = document.getElementById('text-align');
+    const textOpacity = document.getElementById('text-opacity');
+    const textAngle = document.getElementById('text-angle');
+    const textAngleValue = document.getElementById('text-angle-value');
+    
+    // 텍스트 내용 업데이트
+    if (textContent) textContent.value = textObject.text || '';
+    
+    // 글꼴 업데이트
+    if (fontFamily) {
+        if (fontFamily.querySelector(`option[value="${textObject.fontFamily}"]`)) {
+            fontFamily.value = textObject.fontFamily;
+        } else {
+            // 기본 글꼴 선택
+            fontFamily.value = fontFamily.options[0].value;
+        }
+    }
+    
+    // 글자 크기 업데이트
+    if (fontSize) fontSize.value = textObject.fontSize || 20;
+    
+    // 글자 색상 업데이트
+    if (textColor) textColor.value = textObject.fill || '#000000';
+    
+    // 굵게 설정 업데이트
+    if (textBold) textBold.checked = textObject.fontWeight === 'bold';
+    
+    // 기울임 설정 업데이트
+    if (textItalic) textItalic.checked = textObject.fontStyle === 'italic';
+    
+    // 텍스트 정렬 업데이트
+    if (textAlign) textAlign.value = textObject.textAlign || 'left';
+    
+    // 투명도 업데이트
+    if (textOpacity) textOpacity.value = textObject.opacity !== undefined ? textObject.opacity : 1;
+    
+    // 회전 각도 업데이트
+    if (textAngle) {
+        const angle = Math.round(textObject.angle || 0) % 360;
+        textAngle.value = angle;
+        if (textAngleValue) textAngleValue.textContent = angle + '°';
+    }
+    
+    // 텍스트 정렬 버튼 업데이트
+    updateTextAlignButtons(textObject.textAlign || 'left');
+    
+    console.log('텍스트 속성 업데이트 완료:', textObject);
+}
+
 // 텍스트 추가 함수
 function addText(text) {
     if (!canvas) {
@@ -396,7 +653,9 @@ function addText(text) {
             fill: '#000000',
             originX: 'center',
             originY: 'center',
-            textAlign: 'center'
+            textAlign: 'center',
+            opacity: 1,
+            angle: 0
         });
         
         canvas.add(textObj);
@@ -692,28 +951,48 @@ function updatePropertiesPanel(object) {
             showPropertySection('general-properties');
             return;
         }
+
+        console.log('속성 패널 업데이트, 객체 타입:', object.type);
         
-        if (object.type === 'i-text' || object.type === 'textbox') {
+        // 객체 타입에 따라 적절한 속성 패널 표시
+        if (object.type === 'i-text' || object.type === 'text' || object.type === 'textbox') {
+            // 텍스트 객체
+            console.log('텍스트 객체 속성 패널 표시');
             showPropertySection('text-properties');
             updateTextProperties(object);
+            activeToolType = 'text';
         } else if (object.type === 'image') {
+            // 이미지 객체
+            console.log('이미지 객체 속성 패널 표시');
             showPropertySection('image-properties');
             updateImageProperties(object);
+            activeToolType = 'image';
         } else if (object.type === 'rect' || object.type === 'circle' || object.type === 'triangle') {
+            // 도형 객체
+            console.log('도형 객체 속성 패널 표시');
             showPropertySection('shape-properties');
             updateShapeProperties(object);
+            activeToolType = 'shape';
         } else if (object.menuElement === 'table') {
+            // 메뉴 테이블 객체
+            console.log('메뉴 테이블 객체 속성 패널 표시');
             showPropertySection('menu-table-properties');
             updateTableProperties(object);
+            activeToolType = 'menu-table';
         } else if (object.type === 'group') {
-            // 그룹 객체일 경우 메뉴 테이블인지 확인
+            // 그룹 객체
             if (object.menuElement === 'table') {
+                console.log('그룹(메뉴 테이블) 객체 속성 패널 표시');
                 showPropertySection('menu-table-properties');
                 updateTableProperties(object);
+                activeToolType = 'menu-table';
             } else {
+                console.log('그룹 객체 속성 패널 표시(기본)');
                 showPropertySection('general-properties');
             }
         } else {
+            // 기타 객체
+            console.log('기본 속성 패널 표시');
             showPropertySection('general-properties');
         }
     } catch (error) {
@@ -756,7 +1035,9 @@ function showPropertySection(sectionId) {
 
 // 디자인 저장 함수
 function saveDesign() {
-    const designName = document.getElementById('design-name').value;
+    // 모달에서 디자인 이름 가져오기
+    const designNameInput = document.getElementById('design-name-input');
+    const designName = designNameInput ? designNameInput.value : '새 디자인';
     
     if (!designName) {
         alert('디자인 이름을 입력해주세요.');
@@ -786,6 +1067,13 @@ function saveDesign() {
         `/designs/${designId}/edit` : 
         `/designs/create`;
     
+    // 저장 진행 중 표시
+    const saveBtn = document.getElementById('save-design');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 저장 중...';
+    }
+    
     fetch(url, {
         method: 'POST',
         headers: {
@@ -801,11 +1089,23 @@ function saveDesign() {
             window.location.href = '/designs';
         } else {
             alert('저장 실패: ' + result.message);
+            
+            // 저장 버튼 복원
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> 저장';
+            }
         }
     })
     .catch(error => {
         console.error('저장 오류:', error);
         alert('저장 중 오류가 발생했습니다.');
+        
+        // 저장 버튼 복원
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> 저장';
+        }
     });
 }
 
@@ -823,36 +1123,52 @@ function getCsrfToken() {
 window.loadCanvasData = function(canvasData) {
     if (!canvas) {
         console.error('캔버스가 초기화되지 않았습니다.');
-        return;
+        initCanvasWithDefaults();
     }
 
-    console.log('Loading canvas data:', canvasData);
+    console.log('캔버스 데이터 로드 시작:', typeof canvasData === 'string' ? canvasData.substring(0, 50) + '...' : 'Object');
     try {
-        canvas.loadFromJSON(canvasData, function() {
+        // canvasData가 문자열이면 JSON으로 파싱
+        const jsonData = typeof canvasData === 'string' ? JSON.parse(canvasData) : canvasData;
+        
+        canvas.loadFromJSON(jsonData, function() {
             canvas.renderAll();
+            console.log('캔버스 데이터 로드 완료');
+            
             // 캔버스 속성 업데이트
-            const bgColorInput = document.getElementById('canvas-background');
-            const widthInput = document.getElementById('canvas-width');
-            const heightInput = document.getElementById('canvas-height');
-            
-            if (canvasData.backgroundImage && bgColorInput) {
-                bgColorInput.value = canvasData.backgroundColor || '#ffffff';
+            if (jsonData.backgroundColor) {
+                const bgColorInput = document.getElementById('canvas-background');
+                if (bgColorInput) bgColorInput.value = jsonData.backgroundColor;
             }
             
-            if (canvasData.width && widthInput) {
-                widthInput.value = canvasData.width;
+            if (jsonData.width) {
+                const widthInput = document.getElementById('canvas-width');
+                if (widthInput) widthInput.value = jsonData.width;
             }
             
-            if (canvasData.height && heightInput) {
-                heightInput.value = canvasData.height;
+            if (jsonData.height) {
+                const heightInput = document.getElementById('canvas-height');
+                if (heightInput) heightInput.value = jsonData.height;
             }
             
-            console.log('Canvas data loaded successfully');
+            // 아무 객체도 선택되지 않게 처리
+            canvas.discardActiveObject();
+            
+            // 일반 속성 패널도 표시하지 않음
+            hideAllPropertySections();
+            activeToolType = null;
+            
+            // 상태 저장
+            saveCanvasState();
         });
     } catch (error) {
-        console.error('Failed to load canvas data:', error);
+        console.error('캔버스 데이터 로드 오류:', error);
         // 오류 발생 시 기본 캔버스 생성
         initCanvasWithDefaults();
+        
+        // 일반 속성 패널도 표시하지 않음
+        hideAllPropertySections();
+        activeToolType = null;
     }
 }
 
@@ -912,25 +1228,6 @@ function addMenuTable() {
     saveCanvasState();
     
     return tableGroup;
-}
-
-// 텍스트 속성 업데이트 함수
-function updateTextProperties(textObject) {
-    const textContent = document.getElementById('text-content');
-    const fontFamily = document.getElementById('text-font-family');
-    const fontSize = document.getElementById('text-font-size');
-    const textColor = document.getElementById('text-color');
-    const textBold = document.getElementById('text-bold');
-    const textItalic = document.getElementById('text-italic');
-    const textAlign = document.getElementById('text-align');
-    
-    if (textContent) textContent.value = textObject.text;
-    if (fontFamily) fontFamily.value = textObject.fontFamily;
-    if (fontSize) fontSize.value = textObject.fontSize;
-    if (textColor) textColor.value = textObject.fill;
-    if (textBold) textBold.checked = textObject.fontWeight === 'bold';
-    if (textItalic) textItalic.checked = textObject.fontStyle === 'italic';
-    if (textAlign) textAlign.value = textObject.textAlign || 'left';
 }
 
 // 이미지 속성 업데이트 함수

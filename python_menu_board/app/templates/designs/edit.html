@@ -9,6 +9,7 @@
         overflow: hidden;
         margin: 0;
         padding: 0;
+        height: 100vh;
     }
     .container {
         max-width: 100% !important;
@@ -18,6 +19,30 @@
     footer {
         display: none;
     }
+    .design-editor-container {
+        height: calc(100vh - 50px);
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+    .design-editor-header {
+        height: 50px;
+        z-index: 1000;
+        background-color: #fff;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .canvas-container {
+        position: relative;
+        height: 100% !important;
+        width: 100% !important;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
 </style>
 {% endblock %}
 
@@ -26,11 +51,7 @@
     <div class="design-editor-header d-flex justify-content-between align-items-center">
         <h1 class="h3">{{ design.name }}</h1>
         <div class="d-flex align-items-center">
-            <div class="form-floating me-2" style="width: 250px; height: 40px;">
-                <input type="text" class="form-control" id="design-name" placeholder="디자인 이름" required value="{{ design.name }}" style="height: 40px; padding-top: 10px; font-size: 14px;">
-                <label for="design-name" style="padding-top: 5px; font-size: 12px;">디자인 이름</label>
-            </div>
-            <button id="save-design" class="btn btn-primary">
+            <button id="save-design" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#save-design-modal">
                 <i class="fas fa-save"></i> 저장
             </button>
             <a href="{{ url_for('design.index') }}" class="btn btn-outline-secondary ms-2">
@@ -40,7 +61,7 @@
     </div>
 
     <div class="row design-editor-container">
-        <!-- 왼쪽 툴바 -->
+        <!-- 좌측 툴바 -->
         <div class="col-md-1 p-0">
             <div class="editor-toolbar">
                 <div class="toolbar-section">
@@ -94,7 +115,7 @@
             <div class="properties-panel">
                 <h5 class="panel-title">속성</h5>
                 
-                <!-- 일반 속성 -->
+                <!-- 일반 속성 (투명도, 회전 속성 제거) -->
                 <div id="general-properties" class="property-section">
                     <div class="form-group mb-3">
                         <label for="canvas-width">캔버스 너비 (px)</label>
@@ -150,6 +171,15 @@
                             <option value="center">가운데</option>
                             <option value="right">오른쪽</option>
                         </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="text-opacity">투명도</label>
+                        <input type="range" id="text-opacity" class="form-range" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="text-angle">회전 각도</label>
+                        <input type="range" id="text-angle" class="form-range" min="0" max="360" step="1" value="0">
+                        <output id="text-angle-value">0°</output>
                     </div>
                 </div>
 
@@ -269,6 +299,28 @@
         </div>
     </div>
 </div>
+
+<!-- 디자인 저장 모달 추가 -->
+<div class="modal fade" id="save-design-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">디자인 저장</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label for="design-name-input">디자인 이름</label>
+                    <input type="text" class="form-control" id="design-name-input" value="{{ design.name }}" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirm-save-design">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -276,6 +328,19 @@
 <script src="{{ url_for('static', filename='js/design-editor.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // 모달 관련 이벤트 설정
+        const saveModal = document.getElementById('save-design-modal');
+        if (saveModal) {
+            saveModal.addEventListener('hidden.bs.modal', function () {
+                // 모달이 완전히 닫히면 backdrop 제거를 확실히 함
+                document.body.classList.remove('modal-open');
+                const backdrops = document.getElementsByClassName('modal-backdrop');
+                while(backdrops.length > 0) {
+                    backdrops[0].remove();
+                }
+            });
+        }
+        
         // 디자인 ID를 전역 변수로 저장
         window.designId = "{{ design.id }}";
 
@@ -316,49 +381,49 @@
     
     // 디자인 에디터 초기화 함수
     function initEditor(designData) {
+        console.log('디자인 에디터 초기화 시작');
+        
         // 캔버스 크기 설정
         if (designData.canvas_width && designData.canvas_height) {
             document.getElementById('canvas-width').value = designData.canvas_width;
             document.getElementById('canvas-height').value = designData.canvas_height;
         }
 
-        // 기존 캔버스 데이터가 있으면 로드
+        // 캔버스 데이터와 배경 이미지 처리
         if (designData.canvas_data) {
             try {
-                console.log('캔버스 데이터 로드 시도:', designData.canvas_data.substring(0, 100) + '...');
+                console.log('캔버스 데이터 로드');
                 const canvasData = JSON.parse(designData.canvas_data);
                 
-                // 기본 캔버스 초기화 후 데이터 로드
-                initCanvasWithDefaults();
-                
-                // 잠시 지연 후 캔버스 데이터 로드 (초기화 완료 보장)
-                setTimeout(() => {
-                    loadCanvasData(canvasData);
-                }, 100);
+                // 캔버스 데이터 로드 (canvas 객체는 DOMContentLoaded에서 이미 초기화됨)
+                loadCanvasData(canvasData);
             } catch (error) {
                 console.error('캔버스 데이터 파싱 오류:', error);
-                // 오류 발생 시 기본 캔버스 생성
-                initCanvasWithDefaults();
                 
-                // 배경 이미지가 있으면 설정
+                // 배경 이미지만 설정
                 if (designData.background_image) {
                     setBackgroundImage(designData.background_image);
                 }
             }
-        } else {
-            // 캔버스 데이터가 없으면 기본 캔버스 생성
-            initCanvasWithDefaults();
-            
-            // 배경 이미지가 있으면 설정
-            if (designData.background_image) {
-                setBackgroundImage(designData.background_image);
-            }
+        } else if (designData.background_image) {
+            // 캔버스 데이터 없이 배경 이미지만 있는 경우
+            setBackgroundImage(designData.background_image);
         }
         
         // 디자인 이름 설정
         if (designData.name) {
-            document.getElementById('design-name').value = designData.name;
+            // 모달의 이름 입력 필드 설정
+            const nameInput = document.getElementById('design-name-input');
+            if (nameInput) {
+                nameInput.value = designData.name;
+            }
         }
+        
+        // 일반 속성 패널도 숨김 (디자인 요소 선택 전까지는 아무 속성도 표시 안 함)
+        hideAllPropertySections();
+        activeToolType = null;
+        
+        console.log('디자인 에디터 초기화 완료');
     }
 </script>
 {% endblock %} 

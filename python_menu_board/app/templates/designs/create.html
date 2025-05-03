@@ -22,6 +22,20 @@
     footer {
         display: none;
     }
+    
+    /* 캔버스 컨테이너 스타일 추가 - 2겹 문제 해결 */
+    .canvas-container {
+        position: relative;
+        height: 100% !important;
+        width: 100% !important;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
 </style>
 {% endblock %}
 
@@ -35,11 +49,7 @@
         <h1 class="h3 m-0">새 디자인</h1>
     </div>
     <div class="d-flex align-items-center">
-        <div class="form-floating me-2" style="width: 250px; height: 40px;">
-            <input type="text" class="form-control" id="design-name" placeholder="디자인 이름" value="새 디자인" required style="height: 40px; padding-top: 10px; font-size: 14px;">
-            <label for="design-name" style="padding-top: 5px; font-size: 12px;">디자인 이름</label>
-        </div>
-        <button id="save-design" class="btn btn-primary">
+        <button id="save-design" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#save-design-modal">
             <i class="fas fa-save"></i> 저장
         </button>
     </div>
@@ -232,6 +242,28 @@
         </div>
     </div>
 </div>
+
+<!-- 디자인 저장 모달 추가 -->
+<div class="modal fade" id="save-design-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">디자인 저장</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label for="design-name-input">디자인 이름</label>
+                    <input type="text" class="form-control" id="design-name-input" value="새 디자인" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirm-save-design">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -240,6 +272,19 @@
 <script>
     // 테이블용 카테고리 데이터 로드
     document.addEventListener('DOMContentLoaded', function() {
+        // 모달 관련 이벤트 설정
+        const saveModal = document.getElementById('save-design-modal');
+        if (saveModal) {
+            saveModal.addEventListener('hidden.bs.modal', function () {
+                // 모달이 완전히 닫히면 backdrop 제거를 확실히 함
+                document.body.classList.remove('modal-open');
+                const backdrops = document.getElementsByClassName('modal-backdrop');
+                while(backdrops.length > 0) {
+                    backdrops[0].remove();
+                }
+            });
+        }
+        
         fetch('{{ url_for("menu.api_categories") }}')
             .then(response => response.json())
             .then(result => {
