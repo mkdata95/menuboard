@@ -1,0 +1,9 @@
+@echo off
+echo 메뉴 보드 애플리케이션 시작하기...
+
+echo 필요한 패키지 설치 중...
+pip install -r python_menu_board/requirements.txt
+
+cd python_menu_board
+echo Flask 애플리케이션 실행 중...
+python -m flask run --host=0.0.0.0 --port=5000 

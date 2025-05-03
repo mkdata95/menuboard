@@ -43,6 +43,20 @@
         border: none !important;
         box-shadow: none !important;
     }
+    /* 속성 패널 스타일 개선 */
+    .properties-panel {
+        height: 100%;
+        overflow-y: auto;
+        border-left: 1px solid #e0e0e0;
+        background-color: #f9f9f9;
+        padding: 15px;
+    }
+    .property-section {
+        margin-bottom: 15px;
+    }
+    .property-section.d-none {
+        display: none !important;
+    }
 </style>
 {% endblock %}
 
@@ -221,47 +235,58 @@
 
                 <!-- 메뉴 테이블 속성 -->
                 <div id="menu-table-properties" class="property-section d-none">
-                    <div class="form-group mb-3">
-                        <label for="table-category">카테고리 선택</label>
-                        <select id="table-category" class="form-select">
-                            <option value="">카테고리 선택...</option>
-                            <!-- 카테고리 옵션들이 여기에 동적으로 로드됩니다 -->
-                        </select>
+                    <div class="mb-3">
+                        <h6 class="fw-bold">메뉴 테이블 설정</h6>
+                        <!-- 행 추가 버튼 -->
+                        <div class="form-group mb-3">
+                            <button id="add-table-row" class="btn btn-primary w-100">
+                                <i class="fas fa-plus"></i> 메뉴 행 추가
+                            </button>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- 텍스트 설정 -->
+                        <div class="form-group mb-2">
+                            <label for="table-font-size">폰트 크기</label>
+                            <input type="number" id="table-font-size" class="form-control" value="24" min="12" max="72">
+                        </div>
+                        
+                        <div class="form-group mb-2">
+                            <label for="table-text-color">텍스트 색상</label>
+                            <input type="color" id="table-text-color" class="form-control" value="#000000">
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- 테이블 스타일 -->
+                        <div class="form-group mb-2">
+                            <label for="table-background-color">배경 색상</label>
+                            <input type="color" id="table-background-color" class="form-control" value="#ffffff">
+                        </div>
+                        
+                        <div class="form-group mb-2">
+                            <label for="table-border-color">테두리 색상</label>
+                            <input type="color" id="table-border-color" class="form-control" value="#000000">
+                        </div>
+                        
+                        <div class="form-group mb-2">
+                            <label for="table-border-width">테두리 두께</label>
+                            <input type="number" id="table-border-width" class="form-control" value="2" min="0" max="10">
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="table-hide-border">
+                            <label class="form-check-label" for="table-hide-border">테두리 감추기</label>
+                        </div>
+                        
+                        <div class="form-group mb-2">
+                            <label for="table-width">테이블 너비</label>
+                            <input type="number" id="table-width" class="form-control" value="600" min="300" max="1500">
+                        </div>
+                        
+                        <button id="apply-table-changes" class="btn btn-primary w-100 mt-3">테이블 스타일 적용</button>
                     </div>
-                    <div class="form-group mb-3">
-                        <label for="table-columns">표시 열 수</label>
-                        <select id="table-columns" class="form-select">
-                            <option value="1">1</option>
-                            <option value="2" selected>2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                        </select>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="table-width">테이블 너비</label>
-                        <input type="number" id="table-width" class="form-control" value="600" min="200" max="2000">
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="table-show-price" checked>
-                        <label class="form-check-label" for="table-show-price">가격 표시</label>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="table-show-image" checked>
-                        <label class="form-check-label" for="table-show-image">이미지 표시</label>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="table-show-desc" checked>
-                        <label class="form-check-label" for="table-show-desc">설명 표시</label>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="table-header-color">헤더 색상</label>
-                        <input type="color" id="table-header-color" class="form-control" value="#4CAF50">
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="table-text-color">텍스트 색상</label>
-                        <input type="color" id="table-text-color" class="form-control" value="#000000">
-                    </div>
-                    <button id="apply-table-changes" class="btn btn-primary w-100 mt-3">테이블 업데이트</button>
                 </div>
             </div>
         </div>
@@ -325,105 +350,5 @@
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-<script src="{{ url_for('static', filename='js/design-editor.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 모달 관련 이벤트 설정
-        const saveModal = document.getElementById('save-design-modal');
-        if (saveModal) {
-            saveModal.addEventListener('hidden.bs.modal', function () {
-                // 모달이 완전히 닫히면 backdrop 제거를 확실히 함
-                document.body.classList.remove('modal-open');
-                const backdrops = document.getElementsByClassName('modal-backdrop');
-                while(backdrops.length > 0) {
-                    backdrops[0].remove();
-                }
-            });
-        }
-        
-        // 디자인 ID를 전역 변수로 저장
-        window.designId = "{{ design.id }}";
-
-        // 카테고리 데이터 로드
-        fetch('{{ url_for("menu.api_categories") }}')
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    const categorySelect = document.getElementById('table-category');
-                    result.data.forEach(category => {
-                        const option = document.createElement('option');
-                        option.value = category.id;
-                        option.textContent = category.name;
-                        categorySelect.appendChild(option);
-                    });
-                }
-            })
-            .catch(error => console.error('카테고리 로드 오류:', error));
-        
-        // 디자인 데이터 로드
-        fetch('{{ url_for("design.get_design_data", design_id=design.id) }}')
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    console.log('디자인 데이터 로드됨:', result.data);
-                    // 디자인 에디터에 데이터 로드
-                    initEditor(result.data);
-                } else {
-                    console.error('디자인 데이터 로드 실패:', result.message);
-                    initCanvasWithDefaults();
-                }
-            })
-            .catch(error => {
-                console.error('디자인 데이터 로드 오류:', error);
-                initCanvasWithDefaults();
-            });
-    });
-    
-    // 디자인 에디터 초기화 함수
-    function initEditor(designData) {
-        console.log('디자인 에디터 초기화 시작');
-        
-        // 캔버스 크기 설정
-        if (designData.canvas_width && designData.canvas_height) {
-            document.getElementById('canvas-width').value = designData.canvas_width;
-            document.getElementById('canvas-height').value = designData.canvas_height;
-        }
-
-        // 캔버스 데이터와 배경 이미지 처리
-        if (designData.canvas_data) {
-            try {
-                console.log('캔버스 데이터 로드');
-                const canvasData = JSON.parse(designData.canvas_data);
-                
-                // 캔버스 데이터 로드 (canvas 객체는 DOMContentLoaded에서 이미 초기화됨)
-                loadCanvasData(canvasData);
-            } catch (error) {
-                console.error('캔버스 데이터 파싱 오류:', error);
-                
-                // 배경 이미지만 설정
-                if (designData.background_image) {
-                    setBackgroundImage(designData.background_image);
-                }
-            }
-        } else if (designData.background_image) {
-            // 캔버스 데이터 없이 배경 이미지만 있는 경우
-            setBackgroundImage(designData.background_image);
-        }
-        
-        // 디자인 이름 설정
-        if (designData.name) {
-            // 모달의 이름 입력 필드 설정
-            const nameInput = document.getElementById('design-name-input');
-            if (nameInput) {
-                nameInput.value = designData.name;
-            }
-        }
-        
-        // 일반 속성 패널도 숨김 (디자인 요소 선택 전까지는 아무 속성도 표시 안 함)
-        hideAllPropertySections();
-        activeToolType = null;
-        
-        console.log('디자인 에디터 초기화 완료');
-    }
-</script>
+<script src="{{ url_for('static', filename='js/design-editor.js') }}?v={{ range(1000, 9999) | random }}"></script>
 {% endblock %} 
