@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}대시보드{% endblock %}
+
+{% block styles %}
+<style>
+    .dashboard-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .dashboard-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .dashboard-count {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    
+    .dashboard-title {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+    
+    .quick-link {
+        text-decoration: none;
+        display: block;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        margin-bottom: 10px;
+        transition: background-color 0.2s;
+    }
+    
+    .quick-link:hover {
+        background-color: #e9ecef;
+    }
+    
+    .quick-link i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .recent-activity {
+        height: 300px;
+        overflow-y: auto;
+    }
+    
+    .activity-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .activity-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">대시보드</h1>
+
+<div class="row g-4 mb-4">
+    <!-- 통계 카드: 디자인 수 -->
+    <div class="col-md-4">
+        <div class="dashboard-card bg-primary text-white p-4 text-center">
+            <i class="fas fa-palette dashboard-icon"></i>
+            <div class="dashboard-count">{{ design_count|default(0) }}</div>
+            <div class="dashboard-title">디자인</div>
+        </div>
+    </div>
+    
+    <!-- 통계 카드: 메뉴 항목 수 -->
+    <div class="col-md-4">
+        <div class="dashboard-card bg-success text-white p-4 text-center">
+            <i class="fas fa-utensils dashboard-icon"></i>
+            <div class="dashboard-count">{{ menu_count|default(0) }}</div>
+            <div class="dashboard-title">메뉴 항목</div>
+        </div>
+    </div>
+    
+    <!-- 통계 카드: 카테고리 수 -->
+    <div class="col-md-4">
+        <div class="dashboard-card bg-info text-white p-4 text-center">
+            <i class="fas fa-tags dashboard-icon"></i>
+            <div class="dashboard-count">{{ category_count|default(0) }}</div>
+            <div class="dashboard-title">카테고리</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 최근 활동 -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">최근 활동</h5>
+            </div>
+            <div class="card-body recent-activity">
+                {% if activities %}
+                    {% for activity in activities %}
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <i class="fas {{ activity.icon }} me-2"></i>
+                                {{ activity.description }}
+                            </div>
+                            <span class="activity-time">{{ activity.time }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-info-circle mb-3" style="font-size: 2rem; color: #adb5bd;"></i>
+                        <p class="text-muted">최근 활동이 없습니다.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 빠른 링크 -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">바로가기</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('design.create') }}" class="quick-link">
+                    <i class="fas fa-plus-circle"></i> 새 디자인 만들기
+                </a>
+                <a href="{{ url_for('menu.create_category') }}" class="quick-link">
+                    <i class="fas fa-folder-plus"></i> 새 카테고리 추가
+                </a>
+                <a href="{{ url_for('menu.create_item') }}" class="quick-link">
+                    <i class="fas fa-hamburger"></i> 새 메뉴 항목 추가
+                </a>
+                <a href="{{ url_for('design.index') }}" class="quick-link">
+                    <i class="fas fa-th"></i> 디자인 목록 보기
+                </a>
+                <a href="{{ url_for('auth.profile') }}" class="quick-link">
+                    <i class="fas fa-user-edit"></i> 프로필 수정
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
