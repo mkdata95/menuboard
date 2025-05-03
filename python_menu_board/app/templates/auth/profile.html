@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}내 프로필{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h3>내 프로필</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>사용자 이름:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ current_user.username }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>이메일:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ current_user.email }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>가입일:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ current_user.created_at.strftime('%Y-%m-%d') }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>권한:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {% if current_user.is_admin %}
+                            관리자
+                        {% else %}
+                            일반 사용자
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="#" class="btn btn-primary">프로필 수정</a>
+                <a href="#" class="btn btn-outline-secondary">비밀번호 변경</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}디지털 메뉴판 - 홈{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h1 class="display-4 mb-4">디지털 메뉴판에 오신 것을 환영합니다!</h1>
+        <p class="lead mb-5">
+            간편하게 디자인하고 관리하는 디지털 메뉴판 솔루션입니다.
+            드래그 앤 드롭으로 쉽게 메뉴판을 만들고 실시간으로 업데이트하세요.
+        </p>
+        
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('design.create') }}" class="btn btn-primary btn-lg mb-5">새 디자인 만들기</a>
+        {% else %}
+        <div class="d-grid gap-2 d-md-block mb-5">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg me-md-2">회원가입</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">로그인</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <i class="fas fa-paint-brush fa-3x text-primary mb-3"></i>
+                <h3>쉬운 디자인</h3>
+                <p>직관적인 드래그 앤 드롭 인터페이스로 누구나 쉽게 메뉴판을 디자인할 수 있습니다.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <i class="fas fa-mobile-alt fa-3x text-primary mb-3"></i>
+                <h3>모바일 최적화</h3>
+                <p>어떤 기기에서든 잘 보이는 반응형 디자인으로 모바일 고객들에게도 좋은 경험을 제공합니다.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <i class="fas fa-sync-alt fa-3x text-primary mb-3"></i>
+                <h3>실시간 업데이트</h3>
+                <p>메뉴 정보를 변경하면 실시간으로 모든 디스플레이에 업데이트됩니다. 가격과 품절 상태를 바로 반영하세요.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if recent_designs %}
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">최근 디자인</h2>
+        <div class="row">
+            {% for design in recent_designs %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    {% if design.background_image %}
+                    <img src="{{ design.background_image }}" class="card-img-top" alt="{{ design.name }}">
+                    {% else %}
+                    <div class="card-img-top bg-light text-center py-5">
+                        <i class="fas fa-image fa-3x text-secondary"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ design.name }}</h5>
+                        <p class="card-text text-muted">{{ design.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <a href="{{ url_for('design.view', design_id=design.id) }}" class="btn btn-primary">보기</a>
+                        <a href="{{ url_for('design.edit', design_id=design.id) }}" class="btn btn-outline-primary">편집</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

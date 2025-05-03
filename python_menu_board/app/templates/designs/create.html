@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block title %}새 디자인 만들기{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/design-editor.css') }}">
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    .container-fluid {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    footer {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 헤더 영역 -->
+<div class="design-editor-header d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center">
+        <a href="{{ url_for('design.index') }}" class="btn btn-link p-0 me-2" style="font-size: 18px;">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 class="h3 m-0">새 디자인</h1>
+    </div>
+    <div class="d-flex align-items-center">
+        <div class="form-floating me-2" style="width: 250px; height: 40px;">
+            <input type="text" class="form-control" id="design-name" placeholder="디자인 이름" value="새 디자인" required style="height: 40px; padding-top: 10px; font-size: 14px;">
+            <label for="design-name" style="padding-top: 5px; font-size: 12px;">디자인 이름</label>
+        </div>
+        <button id="save-design" class="btn btn-primary">
+            <i class="fas fa-save"></i> 저장
+        </button>
+    </div>
+</div>
+
+<!-- 디자인 에디터 레이아웃 -->
+<div class="design-editor-container">
+    <!-- 왼쪽 툴바 -->
+    <div class="col-md-1 p-0">
+        <div class="editor-toolbar">
+            <div class="toolbar-section">
+                <button class="toolbar-btn" id="add-text" title="텍스트 추가">
+                    <i class="fas fa-font"></i>
+                </button>
+                <button class="toolbar-btn" id="add-image" title="이미지 추가">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button class="toolbar-btn" id="add-shape" title="도형 추가">
+                    <i class="fas fa-shapes"></i>
+                </button>
+                <button class="toolbar-btn" id="add-background" title="배경 이미지 추가">
+                    <i class="fas fa-border-all"></i>
+                </button>
+                <button class="toolbar-btn" id="add-menu-table" title="메뉴 테이블 추가">
+                    <i class="fas fa-table"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-section">
+                <button class="toolbar-btn" id="delete-object" title="선택 객체 삭제">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="toolbar-btn" id="undo" title="실행 취소">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="toolbar-btn" id="redo" title="다시 실행">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-section">
+                <button class="toolbar-btn" id="bring-front" title="맨 앞으로 가져오기">
+                    <i class="fas fa-level-up-alt"></i>
+                </button>
+                <button class="toolbar-btn" id="send-back" title="맨 뒤로 보내기">
+                    <i class="fas fa-level-down-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 캔버스 영역 -->
+    <div class="col p-0">
+        <div class="canvas-container">
+            <canvas id="design-canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- 오른쪽 속성 패널 -->
+    <div class="col-md-3 p-0">
+        <div class="properties-panel">
+            <!-- 텍스트 속성 -->
+            <div id="text-properties" class="property-section">
+                <h5 class="panel-title">텍스트 속성</h5>
+                
+                <div class="form-group">
+                    <label for="text-content">샘플 텍스트</label>
+                    <textarea id="text-content" class="form-control" rows="2"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="text-font-family">글꼴</label>
+                    <select id="text-font-family" class="form-select">
+                        <option value="Arial, Helvetica, sans-serif">Arial, Helvetica, sans-serif</option>
+                        <option value="'Noto Sans KR', sans-serif">Noto Sans KR</option>
+                        <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                        <option value="'Courier New', Courier, monospace">Courier New</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="text-font-size">글자 크기: <span id="font-size-value">30px</span></label>
+                    <div class="range-slider">
+                        <input type="range" id="text-font-size" min="8" max="120" value="30">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>텍스트 스타일</label>
+                    <div class="text-style-buttons">
+                        <button class="text-style-btn" id="text-bold" title="굵게">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button class="text-style-btn" id="text-italic" title="기울임">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button class="text-style-btn" id="text-align-left" title="왼쪽 정렬">
+                            <i class="fas fa-align-left"></i>
+                        </button>
+                        <button class="text-style-btn" id="text-align-center" title="가운데 정렬">
+                            <i class="fas fa-align-center"></i>
+                        </button>
+                        <button class="text-style-btn" id="text-align-right" title="오른쪽 정렬">
+                            <i class="fas fa-align-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>텍스트 색상</label>
+                    <div class="color-picker">
+                        <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
+                        <div class="color-option" style="background-color: #FFFFFF; border: 1px solid #ddd;" data-color="#FFFFFF"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 일반 속성 -->
+            <div id="general-properties" class="property-section">
+                <h5 class="panel-title">일반 속성</h5>
+                
+                <div class="form-group">
+                    <label for="object-opacity">투명도</label>
+                    <div class="range-slider">
+                        <input type="range" id="object-opacity" min="0" max="100" value="100">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="object-rotation">회전 (각도)</label>
+                    <div class="range-slider">
+                        <input type="range" id="object-rotation" min="0" max="360" value="0">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 디자인 정보 -->
+            <div id="design-info" class="property-section">
+                <h5 class="panel-title">디자인 정보</h5>
+                
+                <div class="form-group">
+                    <label for="design-description">설명 텍스트</label>
+                    <textarea id="design-description" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="price-info">가격 정보</label>
+                    <input type="text" id="price-info" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="video-url">비디오 URL</label>
+                    <input type="url" id="video-url" class="form-control">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 파일 입력 숨김 -->
+<input type="file" id="image-upload" accept="image/*" style="display: none;">
+<input type="file" id="background-upload" accept="image/*" style="display: none;">
+
+<!-- 도형 메뉴 모달 -->
+<div class="modal fade" id="shape-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">도형 선택</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="shape-picker">
+                    <div class="shape-item" data-shape="rect">
+                        <div class="shape-preview rect" style="background-color: #4CAF50; width: 50px; height: 50px;"></div>
+                        <div class="shape-name">사각형</div>
+                    </div>
+                    <div class="shape-item" data-shape="circle">
+                        <div class="shape-preview circle" style="background-color: #2196F3; width: 50px; height: 50px; border-radius: 50%;"></div>
+                        <div class="shape-name">원</div>
+                    </div>
+                    <div class="shape-item" data-shape="triangle">
+                        <div class="shape-preview" style="position: relative; height: 50px;">
+                            <div style="position: absolute; left: 0; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 50px solid #FF9800;"></div>
+                        </div>
+                        <div class="shape-name">삼각형</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="{{ url_for('static', filename='js/design-editor.js') }}"></script>
+<script>
+    // 테이블용 카테고리 데이터 로드
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('{{ url_for("menu.api_categories") }}')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const categorySelect = document.getElementById('table-category');
+                    if (categorySelect) {
+                        result.data.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        });
+                    }
+                }
+            })
+            .catch(error => console.error('카테고리 로드 오류:', error));
+        
+        // 폰트 크기 슬라이더 값 표시
+        const fontSizeSlider = document.getElementById('text-font-size');
+        const fontSizeValue = document.getElementById('font-size-value');
+        
+        if (fontSizeSlider && fontSizeValue) {
+            fontSizeSlider.addEventListener('input', function() {
+                fontSizeValue.textContent = this.value + 'px';
+            });
+        }
+    });
+</script>
+{% endblock %} 

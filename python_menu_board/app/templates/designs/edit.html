@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+
+{% block title %}디자인 수정 - {{ design.name }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/design-editor.css') }}">
+<style>
+    body {
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    footer {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="design-editor-page">
+    <div class="design-editor-header d-flex justify-content-between align-items-center">
+        <h1 class="h3">{{ design.name }}</h1>
+        <div class="d-flex align-items-center">
+            <div class="form-floating me-2" style="width: 250px; height: 40px;">
+                <input type="text" class="form-control" id="design-name" placeholder="디자인 이름" required value="{{ design.name }}" style="height: 40px; padding-top: 10px; font-size: 14px;">
+                <label for="design-name" style="padding-top: 5px; font-size: 12px;">디자인 이름</label>
+            </div>
+            <button id="save-design" class="btn btn-primary">
+                <i class="fas fa-save"></i> 저장
+            </button>
+            <a href="{{ url_for('design.index') }}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="row design-editor-container">
+        <!-- 왼쪽 툴바 -->
+        <div class="col-md-1 p-0">
+            <div class="editor-toolbar">
+                <div class="toolbar-section">
+                    <button class="toolbar-btn" id="add-text" title="텍스트 추가">
+                        <i class="fas fa-font"></i>
+                    </button>
+                    <button class="toolbar-btn" id="add-image" title="이미지 추가">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="toolbar-btn" id="add-shape" title="도형 추가">
+                        <i class="fas fa-shapes"></i>
+                    </button>
+                    <button class="toolbar-btn" id="add-background" title="배경 이미지 추가">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="toolbar-btn" id="add-menu-table" title="메뉴 테이블 추가">
+                        <i class="fas fa-table"></i>
+                    </button>
+                </div>
+                <div class="toolbar-section">
+                    <button class="toolbar-btn" id="delete-object" title="선택 객체 삭제">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="toolbar-btn" id="undo" title="실행 취소">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button class="toolbar-btn" id="redo" title="다시 실행">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                <div class="toolbar-section">
+                    <button class="toolbar-btn" id="bring-front" title="맨 앞으로 가져오기">
+                        <i class="fas fa-level-up-alt"></i>
+                    </button>
+                    <button class="toolbar-btn" id="send-back" title="맨 뒤로 보내기">
+                        <i class="fas fa-level-down-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 캔버스 영역 -->
+        <div class="col p-0">
+            <div class="canvas-container">
+                <canvas id="design-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- 오른쪽 속성 패널 -->
+        <div class="col-md-3 p-0">
+            <div class="properties-panel">
+                <h5 class="panel-title">속성</h5>
+                
+                <!-- 일반 속성 -->
+                <div id="general-properties" class="property-section">
+                    <div class="form-group mb-3">
+                        <label for="canvas-width">캔버스 너비 (px)</label>
+                        <input type="number" id="canvas-width" class="form-control" value="1200" min="100" max="3000">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="canvas-height">캔버스 높이 (px)</label>
+                        <input type="number" id="canvas-height" class="form-control" value="800" min="100" max="2000">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="canvas-background">배경 색상</label>
+                        <input type="color" id="canvas-background" class="form-control" value="#ffffff">
+                    </div>
+                </div>
+
+                <!-- 텍스트 속성 -->
+                <div id="text-properties" class="property-section d-none">
+                    <div class="form-group mb-3">
+                        <label for="text-content">텍스트 내용</label>
+                        <textarea id="text-content" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="text-font-family">글꼴</label>
+                        <select id="text-font-family" class="form-select">
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="text-font-size">글자 크기</label>
+                        <input type="number" id="text-font-size" class="form-control" value="20" min="6" max="200">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="text-color">글자 색상</label>
+                        <input type="color" id="text-color" class="form-control" value="#000000">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="text-bold">
+                        <label class="form-check-label" for="text-bold">굵게</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="text-italic">
+                        <label class="form-check-label" for="text-italic">기울임</label>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="text-align">텍스트 정렬</label>
+                        <select id="text-align" class="form-select">
+                            <option value="left">왼쪽</option>
+                            <option value="center">가운데</option>
+                            <option value="right">오른쪽</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 이미지 속성 -->
+                <div id="image-properties" class="property-section d-none">
+                    <div class="form-group mb-3">
+                        <label for="image-opacity">투명도</label>
+                        <input type="range" id="image-opacity" class="form-range" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>이미지 변경</label>
+                        <input type="file" id="replace-image" class="form-control" accept="image/*">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="image-lock">
+                        <label class="form-check-label" for="image-lock">잠금</label>
+                    </div>
+                </div>
+
+                <!-- 도형 속성 -->
+                <div id="shape-properties" class="property-section d-none">
+                    <div class="form-group mb-3">
+                        <label for="shape-fill">채우기 색상</label>
+                        <input type="color" id="shape-fill" class="form-control" value="#4CAF50">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="shape-stroke">테두리 색상</label>
+                        <input type="color" id="shape-stroke" class="form-control" value="#000000">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="shape-stroke-width">테두리 두께</label>
+                        <input type="number" id="shape-stroke-width" class="form-control" value="1" min="0" max="20">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="shape-opacity">투명도</label>
+                        <input type="range" id="shape-opacity" class="form-range" min="0" max="1" step="0.1" value="1">
+                    </div>
+                </div>
+
+                <!-- 메뉴 테이블 속성 -->
+                <div id="menu-table-properties" class="property-section d-none">
+                    <div class="form-group mb-3">
+                        <label for="table-category">카테고리 선택</label>
+                        <select id="table-category" class="form-select">
+                            <option value="">카테고리 선택...</option>
+                            <!-- 카테고리 옵션들이 여기에 동적으로 로드됩니다 -->
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-columns">표시 열 수</label>
+                        <select id="table-columns" class="form-select">
+                            <option value="1">1</option>
+                            <option value="2" selected>2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-width">테이블 너비</label>
+                        <input type="number" id="table-width" class="form-control" value="600" min="200" max="2000">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="table-show-price" checked>
+                        <label class="form-check-label" for="table-show-price">가격 표시</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="table-show-image" checked>
+                        <label class="form-check-label" for="table-show-image">이미지 표시</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="table-show-desc" checked>
+                        <label class="form-check-label" for="table-show-desc">설명 표시</label>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-header-color">헤더 색상</label>
+                        <input type="color" id="table-header-color" class="form-control" value="#4CAF50">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-text-color">텍스트 색상</label>
+                        <input type="color" id="table-text-color" class="form-control" value="#000000">
+                    </div>
+                    <button id="apply-table-changes" class="btn btn-primary w-100 mt-3">테이블 업데이트</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 파일 입력 숨김 -->
+<input type="file" id="image-upload" accept="image/*" style="display: none;">
+<input type="file" id="background-upload" accept="image/*" style="display: none;">
+
+<!-- 도형 메뉴 모달 -->
+<div class="modal fade" id="shape-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">도형 선택</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="shape-picker">
+                    <div class="shape-item" data-shape="rect">
+                        <div class="shape-preview rect"></div>
+                        <div class="shape-name">사각형</div>
+                    </div>
+                    <div class="shape-item" data-shape="circle">
+                        <div class="shape-preview circle"></div>
+                        <div class="shape-name">원</div>
+                    </div>
+                    <div class="shape-item" data-shape="triangle">
+                        <div class="shape-preview triangle"></div>
+                        <div class="shape-name">삼각형</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="{{ url_for('static', filename='js/design-editor.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 디자인 ID를 전역 변수로 저장
+        window.designId = "{{ design.id }}";
+
+        // 카테고리 데이터 로드
+        fetch('{{ url_for("menu.api_categories") }}')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const categorySelect = document.getElementById('table-category');
+                    result.data.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categorySelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('카테고리 로드 오류:', error));
+        
+        // 디자인 데이터 로드
+        fetch('{{ url_for("design.get_design_data", design_id=design.id) }}')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    console.log('디자인 데이터 로드됨:', result.data);
+                    // 디자인 에디터에 데이터 로드
+                    initEditor(result.data);
+                } else {
+                    console.error('디자인 데이터 로드 실패:', result.message);
+                    initCanvasWithDefaults();
+                }
+            })
+            .catch(error => {
+                console.error('디자인 데이터 로드 오류:', error);
+                initCanvasWithDefaults();
+            });
+    });
+    
+    // 디자인 에디터 초기화 함수
+    function initEditor(designData) {
+        // 캔버스 크기 설정
+        if (designData.canvas_width && designData.canvas_height) {
+            document.getElementById('canvas-width').value = designData.canvas_width;
+            document.getElementById('canvas-height').value = designData.canvas_height;
+        }
+
+        // 기존 캔버스 데이터가 있으면 로드
+        if (designData.canvas_data) {
+            try {
+                console.log('캔버스 데이터 로드 시도:', designData.canvas_data.substring(0, 100) + '...');
+                const canvasData = JSON.parse(designData.canvas_data);
+                
+                // 기본 캔버스 초기화 후 데이터 로드
+                initCanvasWithDefaults();
+                
+                // 잠시 지연 후 캔버스 데이터 로드 (초기화 완료 보장)
+                setTimeout(() => {
+                    loadCanvasData(canvasData);
+                }, 100);
+            } catch (error) {
+                console.error('캔버스 데이터 파싱 오류:', error);
+                // 오류 발생 시 기본 캔버스 생성
+                initCanvasWithDefaults();
+                
+                // 배경 이미지가 있으면 설정
+                if (designData.background_image) {
+                    setBackgroundImage(designData.background_image);
+                }
+            }
+        } else {
+            // 캔버스 데이터가 없으면 기본 캔버스 생성
+            initCanvasWithDefaults();
+            
+            // 배경 이미지가 있으면 설정
+            if (designData.background_image) {
+                setBackgroundImage(designData.background_image);
+            }
+        }
+        
+        // 디자인 이름 설정
+        if (designData.name) {
+            document.getElementById('design-name').value = designData.name;
+        }
+    }
+</script>
+{% endblock %} 
